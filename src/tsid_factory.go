@@ -26,9 +26,9 @@ type tsidFactory struct {
 func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	tsidFactory := &tsidFactory{
 		nodeBits:    builder.nodeBits,
-		customEpoch: builder.customEpoch,
-		time:        builder.time,
-		random:      builder.random,
+		customEpoch: builder.GetCustomEpoch(),
+		time:        builder.GetTime(),
+		random:      builder.GetRandom(),
 	}
 
 	tsidFactory.counterBits = int32(RANDOM_BITS) - builder.nodeBits
@@ -48,7 +48,7 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	return tsidFactory, nil
 }
 
-func (factory *tsidFactory) Generate() (*Tsid, error) {
+func (factory *tsidFactory) Generate() (*tsid, error) {
 	time, err := factory.getTime()
 	if err != nil {
 		return nil, err
@@ -59,9 +59,7 @@ func (factory *tsidFactory) Generate() (*Tsid, error) {
 	sCounter := factory.counter & factory.counterMask
 
 	tsidNumber := int64(sTime | int64(sNode) | int64(sCounter))
-	return &Tsid{
-		Number: tsidNumber,
-	}, nil
+	return NewTsid(tsidNumber), nil
 }
 
 func (factory *tsidFactory) getTime() (int64, error) {
@@ -100,10 +98,10 @@ func (factory *tsidFactory) getRandomCounter() (int32, error) {
 			case 1:
 				return int32((bytes[0] & 0xff) & byte(factory.counterMask)), nil
 			case 2:
-				return int32((((bytes[0] & 0xff) << 8) | (bytes[1] & 0xff)) & byte(factory.counterMask)), nil
+				return ((int32(bytes[0]&0xff) << 8) | int32(bytes[1]&0xff)) & factory.counterMask, nil
 			case 3:
-				return int32((((bytes[0] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) |
-					(bytes[2] & 0xff)) & byte(factory.counterMask)), nil
+				return ((int32(bytes[0]&0xff) << 16) | (int32(bytes[1]&0xff) << 8) |
+					int32(bytes[2]&0xff)) & factory.counterMask, nil
 			}
 		}
 	case *intRandom:
@@ -155,6 +153,29 @@ func (builder *tsidFactoryBuilder) WithTime(time time.Time) *tsidFactoryBuilder 
 func (builder *tsidFactoryBuilder) WithRandom(random Random) *tsidFactoryBuilder {
 	builder.random = random
 	return builder
+}
+
+func (builder *tsidFactoryBuilder) GetTime() time.Time {
+	if builder.time.IsZero() {
+		builder.time = time.Now().UTC()
+	}
+	return builder.time
+}
+
+func (builder *tsidFactoryBuilder) GetRandom() Random {
+	if builder.random == nil {
+		randomSupplier := NewMathRandomSupplier()
+		builder.random = NewIntRandom(randomSupplier)
+	}
+
+	return builder.random
+}
+
+func (builder *tsidFactoryBuilder) GetCustomEpoch() int64 {
+	if builder.customEpoch == 0 {
+		builder.customEpoch = TSID_EPOCH
+	}
+	return builder.customEpoch
 }
 
 func (builder *tsidFactoryBuilder) Build() (*tsidFactory, error) {
