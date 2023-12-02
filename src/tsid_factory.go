@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
@@ -11,14 +12,15 @@ var tsidFactoryInstance *tsidFactory
 type tsidFactory struct {
 	node        int32
 	nodeBits    int32
-	nodeMask    uint32
+	nodeMask    int32
 	counter     int32
 	counterBits int32
-	counterMask uint32
+	counterMask int32
 	lastTime    int64
 	customEpoch int64
-	time        *time.Time
+	time        time.Time
 	random      Random
+	randomBytes int32
 }
 
 func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
@@ -30,12 +32,14 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	}
 
 	tsidFactory.counterBits = int32(RANDOM_BITS) - builder.nodeBits
-	tsidFactory.counterMask = uint32(RANDOM_MASK >> builder.nodeBits)
-	tsidFactory.nodeMask = uint32(RANDOM_MASK >> tsidFactory.counterBits)
+	tsidFactory.counterMask = int32(RANDOM_MASK >> builder.nodeBits)
+	tsidFactory.nodeMask = int32(RANDOM_MASK >> tsidFactory.counterBits)
+
+	tsidFactory.randomBytes = ((tsidFactory.counterBits - 1) / 8) + 1
 
 	tsidFactory.node = builder.node & int32(tsidFactory.nodeMask)
 	tsidFactory.lastTime = tsidFactory.time.UnixMilli()
-	randomNumber, err := tsidFactory.random.NextInt()
+	randomNumber, err := tsidFactory.getRandomValue()
 	if err != nil {
 		return nil, err
 	}
@@ -44,11 +48,83 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	return tsidFactory, nil
 }
 
+func (factory *tsidFactory) Generate() (*Tsid, error) {
+	time, err := factory.getTime()
+	if err != nil {
+		return nil, err
+	}
+
+	sTime := time << RANDOM_BITS
+	sNode := factory.node << factory.counterBits
+	sCounter := factory.counter & factory.counterMask
+
+	tsidNumber := int64(sTime | int64(sNode) | int64(sCounter))
+	return &Tsid{
+		Number: tsidNumber,
+	}, nil
+}
+
+func (factory *tsidFactory) getTime() (int64, error) {
+	time := factory.time.UnixMilli()
+	if time <= factory.lastTime {
+		factory.counter++
+		carry := factory.counter >> factory.counterBits
+		factory.counter = factory.counter & factory.counterMask
+		time = factory.lastTime + int64(carry)
+
+	} else {
+		value, err := factory.getRandomValue()
+		if err != nil {
+			return 0, err
+		}
+		factory.counter = value
+	}
+	factory.lastTime = time
+	return (time - factory.customEpoch), nil
+}
+
+func (factory *tsidFactory) getRandomValue() (int32, error) {
+	return factory.getRandomCounter()
+}
+
+func (factory *tsidFactory) getRandomCounter() (int32, error) {
+	switch factory.random.(type) {
+	case *byteRandom:
+		{
+			bytes, err := factory.random.NextBytes(factory.randomBytes)
+			if err != nil {
+				return 0, err
+			}
+
+			switch len(bytes) {
+			case 1:
+				return int32((bytes[0] & 0xff) & byte(factory.counterMask)), nil
+			case 2:
+				return int32((((bytes[0] & 0xff) << 8) | (bytes[1] & 0xff)) & byte(factory.counterMask)), nil
+			case 3:
+				return int32((((bytes[0] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) |
+					(bytes[2] & 0xff)) & byte(factory.counterMask)), nil
+			}
+		}
+	case *intRandom:
+		{
+			value, err := factory.random.NextInt()
+			if err != nil {
+				return 0, err
+			}
+
+			return int32(value & factory.counterMask), nil
+		}
+	}
+
+	return 0, errors.New("invalid random")
+}
+
 type tsidFactoryBuilder struct {
 	node        int32
 	nodeBits    int32
 	customEpoch int64
-	time        *time.Time
+	time        time.Time
 	random      Random
 }
 
@@ -71,7 +147,7 @@ func (builder *tsidFactoryBuilder) WithCustomEpoch(customEpoch int64) *tsidFacto
 	return builder
 }
 
-func (builder *tsidFactoryBuilder) WithTime(time *time.Time) *tsidFactoryBuilder {
+func (builder *tsidFactoryBuilder) WithTime(time time.Time) *tsidFactoryBuilder {
 	builder.time = time
 	return builder
 }
