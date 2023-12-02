@@ -90,27 +90,27 @@ type RandomSupplier interface {
 }
 
 type mathRandom struct {
-	rand *math_rand.Rand
 }
 
 func NewMathRandom() *mathRandom {
-	return &mathRandom{
-		rand: &math_rand.Rand{},
-	}
+	return &mathRandom{}
 }
 
 func (i *mathRandom) GetInt() (int32, error) {
-	i.rand.Seed(
-		time.Now().
-			UnixNano())
+	rand := math_rand.New(
+		math_rand.NewSource(
+			time.Now().UnixNano()))
 
-	return i.rand.Int31(), nil
+	return rand.Int31(), nil
 }
 
 func (i *mathRandom) GetBytes(length int32) ([]byte, error) {
+	rand := math_rand.New(
+		math_rand.NewSource(
+			time.Now().UnixNano()))
 
 	bytes := make([]byte, length)
-	_, err := i.rand.Read(bytes)
+	_, err := rand.Read(bytes)
 
 	return bytes, err
 }
