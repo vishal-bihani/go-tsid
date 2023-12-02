@@ -18,13 +18,15 @@ type tsidFactory struct {
 	lastTime    int64
 	customEpoch int64
 	time        *time.Time
+	random      Random
 }
 
-func newTsidFactory(builder *tsidFactoryBuilder) *tsidFactory {
+func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	tsidFactory := &tsidFactory{
 		nodeBits:    builder.nodeBits,
 		customEpoch: builder.customEpoch,
 		time:        builder.time,
+		random:      builder.random,
 	}
 
 	tsidFactory.counterBits = int32(RANDOM_BITS) - builder.nodeBits
@@ -33,8 +35,13 @@ func newTsidFactory(builder *tsidFactoryBuilder) *tsidFactory {
 
 	tsidFactory.node = builder.node & int32(tsidFactory.nodeMask)
 	tsidFactory.lastTime = tsidFactory.time.UnixMilli()
+	randomNumber, err := tsidFactory.random.NextInt()
+	if err != nil {
+		return nil, err
+	}
 
-	return tsidFactory
+	tsidFactory.counter = randomNumber
+	return tsidFactory, nil
 }
 
 type tsidFactoryBuilder struct {
@@ -42,38 +49,52 @@ type tsidFactoryBuilder struct {
 	nodeBits    int32
 	customEpoch int64
 	time        *time.Time
+	random      Random
 }
 
 func TsidFactoryBuilder() *tsidFactoryBuilder {
 	return &tsidFactoryBuilder{}
 }
 
-func (builder *tsidFactoryBuilder) WithNode(node int32) {
+func (builder *tsidFactoryBuilder) WithNode(node int32) *tsidFactoryBuilder {
 	builder.node = node
+	return builder
 }
 
-func (builder *tsidFactoryBuilder) WithNodeBits(nodeBits int32) {
+func (builder *tsidFactoryBuilder) WithNodeBits(nodeBits int32) *tsidFactoryBuilder {
 	builder.nodeBits = nodeBits
+	return builder
 }
 
-func (builder *tsidFactoryBuilder) WithCustomEpoch(customEpoch int64) {
+func (builder *tsidFactoryBuilder) WithCustomEpoch(customEpoch int64) *tsidFactoryBuilder {
 	builder.customEpoch = customEpoch
+	return builder
 }
 
-func (builder *tsidFactoryBuilder) WithTime(time *time.Time) {
+func (builder *tsidFactoryBuilder) WithTime(time *time.Time) *tsidFactoryBuilder {
 	builder.time = time
+	return builder
 }
 
-func (builder *tsidFactoryBuilder) Build() *tsidFactory {
+func (builder *tsidFactoryBuilder) WithRandom(random Random) *tsidFactoryBuilder {
+	builder.random = random
+	return builder
+}
+
+func (builder *tsidFactoryBuilder) Build() (*tsidFactory, error) {
 	if tsidFactoryInstance != nil {
-		return tsidFactoryInstance
+		return tsidFactoryInstance, nil
 	}
 
 	lock.Lock()
 	defer lock.Unlock()
 
+	var err error = nil
 	if tsidFactoryInstance == nil {
-		tsidFactoryInstance = newTsidFactory(builder)
+		tsidFactoryInstance, err = newTsidFactory(builder)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return tsidFactoryInstance
+	return tsidFactoryInstance, nil
 }
