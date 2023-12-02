@@ -89,14 +89,14 @@ type RandomSupplier interface {
 	GetBytes(length int32) ([]byte, error)
 }
 
-type mathRandom struct {
+type mathRandomSupplier struct {
 }
 
-func NewMathRandom() *mathRandom {
-	return &mathRandom{}
+func NewMathRandomSupplier() *mathRandomSupplier {
+	return &mathRandomSupplier{}
 }
 
-func (i *mathRandom) GetInt() (int32, error) {
+func (i *mathRandomSupplier) GetInt() (int32, error) {
 	rand := math_rand.New(
 		math_rand.NewSource(
 			time.Now().UnixNano()))
@@ -104,7 +104,7 @@ func (i *mathRandom) GetInt() (int32, error) {
 	return rand.Int31(), nil
 }
 
-func (i *mathRandom) GetBytes(length int32) ([]byte, error) {
+func (i *mathRandomSupplier) GetBytes(length int32) ([]byte, error) {
 	rand := math_rand.New(
 		math_rand.NewSource(
 			time.Now().UnixNano()))
@@ -115,19 +115,19 @@ func (i *mathRandom) GetBytes(length int32) ([]byte, error) {
 	return bytes, err
 }
 
-type cryptoRandom struct {
+type cryptoRandomSupplier struct {
 }
 
-func NewCryptoRandom() *cryptoRandom {
-	return &cryptoRandom{}
+func NewCryptoRandomSupplier() *cryptoRandomSupplier {
+	return &cryptoRandomSupplier{}
 }
 
-func (i *cryptoRandom) GetInt() (int32, error) {
+func (i *cryptoRandomSupplier) GetInt() (int32, error) {
 	random, err := crypto_rand.Int(crypto_rand.Reader, big.NewInt(math.MaxInt32))
 	return int32(random.Int64()), err
 }
 
-func (i *cryptoRandom) GetBytes(length int32) ([]byte, error) {
+func (i *cryptoRandomSupplier) GetBytes(length int32) ([]byte, error) {
 	bytes := make([]byte, length)
 	_, err := crypto_rand.Read(bytes)
 
