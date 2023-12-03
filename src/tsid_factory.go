@@ -49,8 +49,8 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 
 	// properties to be calculated
 	tsidFactory.counterBits = int32(RANDOM_BITS) - builder.nodeBits
-	tsidFactory.counterMask = int32(RANDOM_MASK >> builder.nodeBits)
-	tsidFactory.nodeMask = int32(RANDOM_MASK >> tsidFactory.counterBits)
+	tsidFactory.counterMask = int32(uint32(RANDOM_MASK) >> builder.nodeBits)
+	tsidFactory.nodeMask = int32(uint32(RANDOM_MASK) >> tsidFactory.counterBits)
 
 	tsidFactory.randomBytes = ((tsidFactory.counterBits - 1) / 8) + 1
 
@@ -91,7 +91,7 @@ func (factory *tsidFactory) getTime() (int64, error) {
 	time := factory.time.UnixMilli()
 	if time <= factory.lastTime {
 		factory.counter++
-		carry := factory.counter >> factory.counterBits
+		carry := uint32(factory.counter) >> factory.counterBits
 		factory.counter = factory.counter & factory.counterMask
 		time = factory.lastTime + int64(carry)
 
@@ -242,4 +242,8 @@ func (builder *tsidFactoryBuilder) Build() (*tsidFactory, error) {
 		}
 	}
 	return tsidFactoryInstance, nil
+}
+
+func (builder *tsidFactoryBuilder) NewInstance() (*tsidFactory, error) {
+	return newTsidFactory(builder)
 }
