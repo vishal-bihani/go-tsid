@@ -20,17 +20,27 @@ type Random interface {
 }
 
 type intRandom struct {
-	randomSupplier RandomSupplier
+	intSupplier     IntSupplier
+	intSupplierFunc func() (int32, error)
 }
 
-func NewIntRandom(randomSupplier RandomSupplier) *intRandom {
+func NewIntRandom(intSupplier IntSupplier) *intRandom {
 	return &intRandom{
-		randomSupplier: randomSupplier,
+		intSupplier: intSupplier,
+	}
+}
+
+func NewIntRandomWithSupplierFunc(intSupplierFunc func() (int32, error)) *intRandom {
+	return &intRandom{
+		intSupplierFunc: intSupplierFunc,
 	}
 }
 
 func (i *intRandom) NextInt() (int32, error) {
-	return i.randomSupplier.GetInt()
+	if i.intSupplierFunc != nil {
+		return i.intSupplierFunc()
+	}
+	return i.intSupplier.GetInt()
 }
 
 func (i *intRandom) NextBytes(length int32) ([]byte, error) {
@@ -41,34 +51,57 @@ func (i *intRandom) NextBytes(length int32) ([]byte, error) {
 	var err error = nil
 
 	for j := 0; j < int(length); j++ {
-
 		if shift < BYTE_SIZE {
 			shift = INTEGER_SIZE_32
-			random, err = i.randomSupplier.GetInt()
+
+			// generate random value
+			if i.intSupplierFunc != nil {
+				random, err = i.intSupplierFunc()
+
+			} else {
+				random, err = i.intSupplier.GetInt()
+
+			}
 			if err != nil {
 				return nil, err
 			}
 		}
 		shift -= BYTE_SIZE
-		bytes[j] = byte(uint32(random >> shift))
+		bytes[j] = byte(uint32(random) >> shift)
 	}
 
 	return bytes, nil
 }
 
 type byteRandom struct {
-	randomSupplier RandomSupplier
+	byteSupplier     ByteSupplier
+	byteSupplierFunc func(length int32) ([]byte, error)
 }
 
 func NewByteRandom(randomSupplier RandomSupplier) *byteRandom {
 	return &byteRandom{
-		randomSupplier: randomSupplier,
+		byteSupplier: randomSupplier,
+	}
+}
+
+func NewByteRandomWithSupplierFunc(randomSupplierFunc func(length int32) ([]byte, error)) *byteRandom {
+	return &byteRandom{
+		byteSupplierFunc: randomSupplierFunc,
 	}
 }
 
 func (i *byteRandom) NextInt() (int32, error) {
 	var number int32 = 0
-	bytes, err := i.randomSupplier.GetBytes(INTEGER_SIZE_32)
+	var bytes []byte
+	var err error
+
+	if i.byteSupplierFunc != nil {
+		bytes, err = i.byteSupplierFunc(INTEGER_SIZE_32)
+
+	} else {
+		bytes, err = i.byteSupplier.GetBytes(INTEGER_SIZE_32)
+
+	}
 	if err != nil {
 		return int32(number), err
 	}
@@ -80,12 +113,23 @@ func (i *byteRandom) NextInt() (int32, error) {
 }
 
 func (i *byteRandom) NextBytes(length int32) ([]byte, error) {
-	return i.randomSupplier.GetBytes(length)
+	if i.byteSupplierFunc != nil {
+		return i.byteSupplierFunc(length)
+	}
+	return i.byteSupplier.GetBytes(length)
 }
 
 // Suppliers
 type RandomSupplier interface {
 	GetInt() (int32, error)
+	GetBytes(length int32) ([]byte, error)
+}
+
+type IntSupplier interface {
+	GetInt() (int32, error)
+}
+
+type ByteSupplier interface {
 	GetBytes(length int32) ([]byte, error)
 }
 
