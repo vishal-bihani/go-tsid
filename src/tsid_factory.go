@@ -2,13 +2,20 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"sync"
 	"time"
 )
 
+// Lock will be used to control access for creating tsidFactory instance
 var lock = &sync.Mutex{}
+
+// Only a single instance of tsidFactory will be used per node
 var tsidFactoryInstance *tsidFactory
 
+// tsidFactory is a singleton which
+// should be used to generate random tsid
 type tsidFactory struct {
 	node        int32
 	nodeBits    int32
@@ -24,20 +31,37 @@ type tsidFactory struct {
 }
 
 func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
+
+	// properties from builder
 	tsidFactory := &tsidFactory{
-		nodeBits:    builder.nodeBits,
 		customEpoch: builder.GetCustomEpoch(),
 		time:        builder.GetTime(),
 		random:      builder.GetRandom(),
 	}
 
+	// get node bits
+	nodeBits, err := builder.GetNodeBits()
+	if err != nil {
+		log.Print(err.Error())
+		return nil, errors.New("failed to initialize tsid factory")
+	}
+	tsidFactory.nodeBits = nodeBits
+
+	// properties to be calculated
 	tsidFactory.counterBits = int32(RANDOM_BITS) - builder.nodeBits
 	tsidFactory.counterMask = int32(RANDOM_MASK >> builder.nodeBits)
 	tsidFactory.nodeMask = int32(RANDOM_MASK >> tsidFactory.counterBits)
 
 	tsidFactory.randomBytes = ((tsidFactory.counterBits - 1) / 8) + 1
 
-	tsidFactory.node = builder.node & int32(tsidFactory.nodeMask)
+	// get node id
+	node, err := builder.GetNode()
+	if err != nil {
+		log.Print(err.Error())
+		return nil, errors.New("failed to initialize tsid factory")
+	}
+	tsidFactory.node = node & int32(tsidFactory.nodeMask)
+
 	tsidFactory.lastTime = tsidFactory.time.UnixMilli()
 	randomNumber, err := tsidFactory.getRandomValue()
 	if err != nil {
@@ -48,17 +72,18 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	return tsidFactory, nil
 }
 
+// Generate will return a tsid with random number
 func (factory *tsidFactory) Generate() (*tsid, error) {
 	time, err := factory.getTime()
 	if err != nil {
 		return nil, err
 	}
 
-	sTime := time << RANDOM_BITS
-	sNode := factory.node << factory.counterBits
-	sCounter := factory.counter & factory.counterMask
+	time = time << RANDOM_BITS
+	node := factory.node << factory.counterBits
+	counter := factory.counter & factory.counterMask
 
-	tsidNumber := int64(sTime | int64(sNode) | int64(sCounter))
+	tsidNumber := int64(time | int64(node) | int64(counter))
 	return NewTsid(tsidNumber), nil
 }
 
@@ -153,6 +178,29 @@ func (builder *tsidFactoryBuilder) WithTime(time time.Time) *tsidFactoryBuilder 
 func (builder *tsidFactoryBuilder) WithRandom(random Random) *tsidFactoryBuilder {
 	builder.random = random
 	return builder
+}
+
+// GetNode returns the provided node id. Default is zero.
+func (builder *tsidFactoryBuilder) GetNode() (int32, error) {
+	max := int32(1<<builder.nodeBits) - 1
+
+	if builder.node < 0 || builder.node > max {
+		err := fmt.Sprintf("node id out of range [0, %d]: %d", max, builder.node)
+		return 0, errors.New(err)
+	}
+	return builder.node, nil
+}
+
+// GetNodeBits returns the provided node bits. Default is zero.
+// Range: [0, 20]
+func (builder *tsidFactoryBuilder) GetNodeBits() (int32, error) {
+	max := 20
+
+	if builder.nodeBits < 0 || builder.nodeBits > 20 {
+		err := fmt.Sprintf("node bits out of range [0, %d]: %d", max, builder.nodeBits)
+		return 0, errors.New(err)
+	}
+	return builder.nodeBits, nil
 }
 
 func (builder *tsidFactoryBuilder) GetTime() time.Time {
