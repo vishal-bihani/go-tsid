@@ -1,11 +1,12 @@
 package main
 
 const (
-	TSID_EPOCH  int64 = 1672531200000 // 2023-01-01T00:00:00.000Z
-	TSID_BYTES  int8  = 8
-	TSID_CHARS  int8  = 13
-	RANDOM_BITS int8  = 22
-	RANDOM_MASK int32 = 0x003fffff
+	TSID_EPOCH     int64 = 1672531200000 // 2023-01-01T00:00:00.000Z
+	TSID_BYTES     int8  = 8
+	TSID_CHARS     int8  = 13
+	RANDOM_BITS    int8  = 22
+	RANDOM_MASK    int32 = 0x003fffff
+	NODE_BITS_1024       = 10
 )
 
 var ALPHABET_UPPERCASE []rune = []rune("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
@@ -207,4 +208,29 @@ func (t *tsid) ToStringWithAlphabets(alphabets []rune) string {
 	chars[12] = alphabets[(uint64(t.number) & 0b11111)]
 
 	return string(chars)
+}
+
+// IsValid checks if the given tsid string is valid or not
+func (t *tsid) IsValid(str string) bool {
+	return len(str) != 0 && IsValidRuneArray([]rune(str))
+}
+
+// GetRandom returns random component (node + counter) of the tsid
+func (t *tsid) GetRandom() int64 {
+	return t.number & int64(RANDOM_MASK)
+}
+
+// GetUnixMillis returns time of creation in millis since 1970-01-01
+func (t *tsid) GetUnixMillis() int64 {
+	return t.getTime() + TSID_EPOCH
+}
+
+// GetUnixMillis returns time of creation in millis since 1970-01-01
+func (t *tsid) GetUnixMillisWithCustomEpoch(epoch int64) int64 {
+	return t.getTime() + epoch
+}
+
+// getTime returns the time component
+func (t *tsid) getTime() int64 {
+	return int64(uint64(t.number) >> int64(RANDOM_BITS))
 }
