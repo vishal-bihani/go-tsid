@@ -58,7 +58,7 @@ func Test_GetUnixMillis(t *testing.T) {
 			intRandom := NewIntRandomWithSupplierFunc(intRandomSupplierFunc)
 
 			tsidFactory, err := TsidFactoryBuilder().
-				WithTime(time).
+				WithClock(time).
 				WithRandom(intRandom).
 				NewInstance()
 			if err != nil {

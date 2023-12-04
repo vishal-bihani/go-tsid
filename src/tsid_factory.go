@@ -25,7 +25,7 @@ type tsidFactory struct {
 	counterMask int32
 	lastTime    int64
 	customEpoch int64
-	time        time.Time
+	clock       Clock
 	random      Random
 	randomBytes int32
 }
@@ -35,7 +35,7 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	// properties from builder
 	tsidFactory := &tsidFactory{
 		customEpoch: builder.GetCustomEpoch(),
-		time:        builder.GetTime(),
+		clock:       builder.GetClock(),
 		random:      builder.GetRandom(),
 	}
 
@@ -62,7 +62,7 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 	}
 	tsidFactory.node = node & int32(tsidFactory.nodeMask)
 
-	tsidFactory.lastTime = tsidFactory.time.UnixMilli()
+	tsidFactory.lastTime = tsidFactory.clock.UnixMilli()
 	randomNumber, err := tsidFactory.getRandomValue()
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (factory *tsidFactory) Generate() (*tsid, error) {
 }
 
 func (factory *tsidFactory) getTime() (int64, error) {
-	time := factory.time.UnixMilli()
+	time := factory.clock.UnixMilli()
 	if time <= factory.lastTime {
 		factory.counter++
 		carry := uint32(factory.counter) >> factory.counterBits
@@ -147,7 +147,7 @@ type tsidFactoryBuilder struct {
 	node        int32
 	nodeBits    int32
 	customEpoch int64
-	time        time.Time
+	clock       Clock
 	random      Random
 }
 
@@ -170,8 +170,8 @@ func (builder *tsidFactoryBuilder) WithCustomEpoch(customEpoch int64) *tsidFacto
 	return builder
 }
 
-func (builder *tsidFactoryBuilder) WithTime(time time.Time) *tsidFactoryBuilder {
-	builder.time = time
+func (builder *tsidFactoryBuilder) WithClock(clock Clock) *tsidFactoryBuilder {
+	builder.clock = clock
 	return builder
 }
 
@@ -206,11 +206,11 @@ func (builder *tsidFactoryBuilder) GetNodeBits() (int32, error) {
 	return builder.nodeBits, nil
 }
 
-func (builder *tsidFactoryBuilder) GetTime() time.Time {
-	if builder.time.IsZero() {
-		builder.time = time.Now().UTC()
+func (builder *tsidFactoryBuilder) GetClock() Clock {
+	if builder.clock == nil {
+		builder.clock = time.Now().UTC()
 	}
-	return builder.time
+	return builder.clock
 }
 
 func (builder *tsidFactoryBuilder) GetRandom() Random {
