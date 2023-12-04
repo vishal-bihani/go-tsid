@@ -11,6 +11,9 @@ import (
 // Lock will be used to control access for creating tsidFactory instance
 var lock = &sync.Mutex{}
 
+// Lock will be used to control synchronize access to random value generator
+var rLock = &sync.Mutex{}
+
 // Only a single instance of tsidFactory will be used per node
 var tsidFactoryInstance *tsidFactory
 
@@ -114,7 +117,10 @@ func (factory *tsidFactory) getRandomCounter() (int32, error) {
 	switch factory.random.(type) {
 	case *byteRandom:
 		{
+			rLock.Lock()
 			bytes, err := factory.random.NextBytes(factory.randomBytes)
+			rLock.Unlock()
+
 			if err != nil {
 				return 0, err
 			}
@@ -131,7 +137,9 @@ func (factory *tsidFactory) getRandomCounter() (int32, error) {
 		}
 	case *intRandom:
 		{
+			rLock.Lock()
 			value, err := factory.random.NextInt()
+			rLock.Unlock()
 			if err != nil {
 				return 0, err
 			}
