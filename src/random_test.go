@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_IntRandom(t *testing.T) {
@@ -17,9 +19,9 @@ func Test_IntRandom(t *testing.T) {
 
 		for i := 0; i < 20; i++ {
 			value, err := intRandom.NextInt()
-			if err != nil || randomValue != int(value) {
-				t.FailNow()
-			}
+
+			assert.Nil(t, err)
+			assert.Equal(t, randomValue, int(value))
 		}
 	})
 
@@ -42,9 +44,8 @@ func Test_IntRandom(t *testing.T) {
 				number = int32(byte(number<<BYTE_SIZE) | (bytes[j] & 0xff))
 			}
 
-			if err != nil || randomValue != int(number) {
-				t.FailNow()
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, randomValue, int(number))
 		}
 	})
 }
@@ -70,9 +71,8 @@ func Test_ByteRandom(t *testing.T) {
 				number = int32(byte(number<<BYTE_SIZE) | (bytes[j] & 0xff))
 			}
 
-			if err != nil || number != 15 {
-				t.FailNow()
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, number, int32(15))
 		}
 	})
 
@@ -102,9 +102,8 @@ func Test_ByteRandom(t *testing.T) {
 				actualNumber = int32(byte(actualNumber<<BYTE_SIZE) | (bytes[j] & 0xff))
 			}
 
-			if err != nil || randomValue != actualNumber {
-				t.FailNow()
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, randomValue, actualNumber)
 		}
 	})
 }
@@ -122,9 +121,8 @@ func Test_MathRandomSupplier(t *testing.T) {
 		for i := 0; i < 10; i++ {
 
 			value, err := supplier.GetInt()
-			if err != nil || value == lastValue {
-				t.FailNow()
-			}
+			assert.Nil(t, err)
+			assert.NotEqual(t, lastValue, value)
 
 			lastValue = value
 
@@ -140,10 +138,7 @@ func Test_MathRandomSupplier(t *testing.T) {
 		for i := 0; i < 10; i++ {
 
 			bytes, err := supplier.GetBytes(INTEGER_BYTES_32)
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			assert.Nil(t, err)
 
 			// convert bytes to number
 			var value int32 = 0
@@ -152,9 +147,7 @@ func Test_MathRandomSupplier(t *testing.T) {
 				value = int32(byte(value<<BYTE_SIZE) | (bytes[j] & 0xff))
 			}
 
-			if lastValue == value {
-				t.FailNow()
-			}
+			assert.NotEqual(t, lastValue, value)
 			lastValue = value
 
 			// this will result in change of seed
@@ -176,9 +169,8 @@ func Test_CryptoRandomSupplier(t *testing.T) {
 		for i := 0; i < 10; i++ {
 
 			value, err := supplier.GetInt()
-			if err != nil || value == lastValue {
-				t.FailNow()
-			}
+			assert.Nil(t, err)
+			assert.NotEqual(t, lastValue, value)
 
 			lastValue = value
 
@@ -193,10 +185,7 @@ func Test_CryptoRandomSupplier(t *testing.T) {
 		for i := 0; i < 10; i++ {
 
 			bytes, err := supplier.GetBytes(INTEGER_BYTES_32)
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			assert.Nil(t, err)
 
 			// convert bytes to number
 			var value int32 = 0
@@ -205,9 +194,7 @@ func Test_CryptoRandomSupplier(t *testing.T) {
 				value = int32(byte(value<<BYTE_SIZE) | (bytes[j] & 0xff))
 			}
 
-			if lastValue == value {
-				t.FailNow()
-			}
+			assert.NotEqual(t, lastValue, value)
 			lastValue = value
 
 			// this will result in change of seed

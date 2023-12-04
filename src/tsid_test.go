@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -16,18 +18,12 @@ func Test_GetUnixMillis(t *testing.T) {
 	t.Run("should return correct time", func(t *testing.T) {
 		start := time.Now().UnixMilli()
 
-		tsidFactory, err := TsidFactoryBuilder().
+		tsidFactory, _ := TsidFactoryBuilder().
 			NewInstance()
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
+		assert.NotNil(t, tsidFactory)
 
-		tsid, err := tsidFactory.Generate()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+		tsid, _ := tsidFactory.Generate()
+		assert.NotNil(t, tsid)
 
 		middle := tsid.GetUnixMillis()
 		end := time.Now().UnixMilli()
@@ -57,23 +53,17 @@ func Test_GetUnixMillis(t *testing.T) {
 
 			intRandom := NewIntRandomWithSupplierFunc(intRandomSupplierFunc)
 
-			tsidFactory, err := TsidFactoryBuilder().
+			tsidFactory, _ := TsidFactoryBuilder().
 				WithClock(time).
 				WithRandom(intRandom).
 				NewInstance()
-			if err != nil {
-				t.FailNow()
-			}
+			assert.NotNil(t, tsidFactory)
 
-			tsid, err := tsidFactory.Generate()
-			if err != nil {
-				t.FailNow()
-			}
+			tsid, _ := tsidFactory.Generate()
+			assert.NotNil(t, tsid)
 
 			result := tsid.GetUnixMillis()
-			if millis != result {
-				t.FailNow()
-			}
+			assert.Equal(t, millis, result)
 		}
 	})
 
@@ -84,19 +74,13 @@ func Test_GetUnixMillis(t *testing.T) {
 
 		start := time.Now().UnixMilli()
 
-		tsidFactory, err := TsidFactoryBuilder().
+		tsidFactory, _ := TsidFactoryBuilder().
 			WithCustomEpoch(epoch).
 			NewInstance()
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
+		assert.NotNil(t, tsidFactory)
 
-		tsid, err := tsidFactory.Generate()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+		tsid, _ := tsidFactory.Generate()
+		assert.NotNil(t, tsid)
 
 		middle := tsid.GetUnixMillisWithCustomEpoch(epoch)
 		end := time.Now().UnixMilli()

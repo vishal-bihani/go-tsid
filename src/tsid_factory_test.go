@@ -17,25 +17,17 @@ func Test_WithNode(t *testing.T) {
 			mask := (1 << nodeBits) - 1
 
 			node := int32(500 & mask)
-			tsidFactory, err := TsidFactoryBuilder().
+			tsidFactory, _ := TsidFactoryBuilder().
 				WithNode(node).
 				WithNodeBits(nodeBits).
 				NewInstance()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			assert.NotNil(t, tsidFactory)
 
-			tsid, err := tsidFactory.Generate()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			tsid, _ := tsidFactory.Generate()
+			assert.NotNil(t, tsid)
 
 			actualNode := int32(uint32(tsid.GetRandom())>>shift) & int32(mask)
-			if actualNode != node {
-				t.FailNow()
-			}
+			assert.Equal(t, node, actualNode, "Node id does not match the provided id")
 		}
 	})
 
@@ -46,24 +38,16 @@ func Test_WithNode(t *testing.T) {
 			shift := RANDOM_BITS - nodeBits
 			mask := (1 << nodeBits) - 1
 
-			tsidFactory, err := TsidFactoryBuilder().
+			tsidFactory, _ := TsidFactoryBuilder().
 				WithNodeBits(nodeBits).
 				NewInstance()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			assert.NotNil(t, tsidFactory)
 
-			tsid, err := tsidFactory.Generate()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			tsid, _ := tsidFactory.Generate()
+			assert.NotNil(t, tsid)
 
 			actualNode := int32(uint32(tsid.GetRandom())>>shift) & int32(mask)
-			if actualNode != 0 {
-				t.FailNow()
-			}
+			assert.Zero(t, actualNode, "Node id does not match the default id")
 		}
 	})
 }
@@ -79,25 +63,17 @@ func Test_WithNodeBits(t *testing.T) {
 			mask := (1 << nodeBits) - 1
 
 			node := int32(500 & mask)
-			tsidFactory, err := TsidFactoryBuilder().
+			tsidFactory, _ := TsidFactoryBuilder().
 				WithNode(node).
 				WithNodeBits(nodeBits).
 				NewInstance()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			assert.NotNil(t, tsidFactory)
 
-			tsid, err := tsidFactory.Generate()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			tsid, _ := tsidFactory.Generate()
+			assert.NotNil(t, tsid)
 
 			actualNode := int32(uint32(tsid.GetRandom())>>shift) & int32(mask)
-			if actualNode != node {
-				t.FailNow()
-			}
+			assert.Equal(t, node, actualNode, "Node id does not match the provided id")
 		}
 	})
 
@@ -109,24 +85,16 @@ func Test_WithNodeBits(t *testing.T) {
 			mask := (1 << defaultNodeBits) - 1
 
 			node := int32(500 & mask)
-			tsidFactory, err := TsidFactoryBuilder().
+			tsidFactory, _ := TsidFactoryBuilder().
 				WithNode(node).
 				NewInstance()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			assert.NotNil(t, tsidFactory)
 
-			tsid, err := tsidFactory.Generate()
-			if err != nil {
-				t.Error(err.Error())
-				t.FailNow()
-			}
+			tsid, _ := tsidFactory.Generate()
+			assert.NotNil(t, tsid)
 
 			actualNode := int32(uint32(tsid.GetRandom())>>shift) & int32(mask)
-			if actualNode != 0 {
-				t.FailNow()
-			}
+			assert.Zero(t, actualNode, "Node id does not match the default id")
 		}
 	})
 }
@@ -138,35 +106,23 @@ func Test_WithRandom(t *testing.T) {
 		supplier := NewMathRandomSupplier()
 		random := NewIntRandom(supplier)
 
-		tsidFactory, err := TsidFactoryBuilder().
+		tsidFactory, _ := TsidFactoryBuilder().
 			WithRandom(random).
 			NewInstance()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+		assert.NotNil(t, tsidFactory)
 
-		_, err = tsidFactory.Generate()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+		_, err := tsidFactory.Generate()
+		assert.Nil(t, err)
 	})
 
 	t.Run("should use default random when not provided", func(t *testing.T) {
 
-		tsidFactory, err := TsidFactoryBuilder().
+		tsidFactory, _ := TsidFactoryBuilder().
 			NewInstance()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+		assert.NotNil(t, tsidFactory)
 
-		_, err = tsidFactory.Generate()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+		_, err := tsidFactory.Generate()
+		assert.Nil(t, err)
 	})
 }
 
@@ -185,14 +141,11 @@ func Test_Generate(t *testing.T) {
 			return 0, nil
 		})
 
-		tsidFactory, err := TsidFactoryBuilder().
+		tsidFactory, _ := TsidFactoryBuilder().
 			WithClock(clock).
 			WithRandom(intRandom).
-			Build()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+			NewInstance()
+		assert.NotNil(t, tsidFactory)
 
 		// Generate and record the time component
 		tsid1, _ := tsidFactory.Generate()
@@ -238,14 +191,11 @@ func Test_Generate(t *testing.T) {
 			return 0, nil
 		})
 
-		tsidFactory, err := TsidFactoryBuilder().
+		tsidFactory, _ := TsidFactoryBuilder().
 			WithClock(clock).
 			WithRandom(intRandom).
-			Build()
-		if err != nil {
-			t.Error(err.Error())
-			t.FailNow()
-		}
+			NewInstance()
+		assert.NotNil(t, tsidFactory)
 
 		// Generate and record the time component
 		tsid1, _ := tsidFactory.Generate()
