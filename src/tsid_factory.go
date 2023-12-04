@@ -182,6 +182,9 @@ func (builder *tsidFactoryBuilder) WithRandom(random Random) *tsidFactoryBuilder
 
 // GetNode returns the provided node id. Default is zero.
 func (builder *tsidFactoryBuilder) GetNode() (int32, error) {
+	if builder.nodeBits <= 0 {
+		return 0, nil
+	}
 	max := int32(1<<builder.nodeBits) - 1
 
 	if builder.node < 0 || builder.node > max {
