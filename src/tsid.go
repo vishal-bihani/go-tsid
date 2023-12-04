@@ -2,11 +2,11 @@ package main
 
 const (
 	TSID_EPOCH     int64 = 1672531200000 // 2023-01-01T00:00:00.000Z
-	TSID_BYTES     int8  = 8
-	TSID_CHARS     int8  = 13
-	RANDOM_BITS    int8  = 22
+	TSID_BYTES     int32 = 8
+	TSID_CHARS     int32 = 13
+	RANDOM_BITS    int32 = 22
 	RANDOM_MASK    int32 = 0x003fffff
-	NODE_BITS_1024       = 10
+	NODE_BITS_1024 int32 = 10
 )
 
 var ALPHABET_UPPERCASE []rune = []rune("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
