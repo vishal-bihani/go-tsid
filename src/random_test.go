@@ -109,6 +109,10 @@ func Test_ByteRandom(t *testing.T) {
 	})
 }
 
+// Test_MathRandomSupplier tests the uniqueness of the random values generated
+// although only 10 random values are being generated, this test may fail if the
+// value generated is similar to the previous value. Failing of this test will not
+// affect tsid generation logic
 func Test_MathRandomSupplier(t *testing.T) {
 
 	t.Run("GetInt should generate random values", func(t *testing.T) {
@@ -155,6 +159,59 @@ func Test_MathRandomSupplier(t *testing.T) {
 
 			// this will result in change of seed
 			time.Sleep(time.Duration(5) * time.Millisecond)
+		}
+	})
+}
+
+// Test_CryptoRandomSupplier tests the uniqueness of the random values generated
+// although only 10 random values are being generated, this test may fail if the
+// value generated is similar to the previous value. Failing of this test will not
+// affect tsid generation logic
+func Test_CryptoRandomSupplier(t *testing.T) {
+
+	t.Run("GetInt should generate random values", func(t *testing.T) {
+		supplier := NewCryptoRandomSupplier()
+		var lastValue int32 = -1
+
+		for i := 0; i < 10; i++ {
+
+			value, err := supplier.GetInt()
+			if err != nil || value == lastValue {
+				t.FailNow()
+			}
+
+			lastValue = value
+
+			time.Sleep(time.Duration(5) * time.Nanosecond)
+		}
+	})
+
+	t.Run("GetBytes should generate random values", func(t *testing.T) {
+		supplier := NewCryptoRandomSupplier()
+		var lastValue int32 = -1
+
+		for i := 0; i < 10; i++ {
+
+			bytes, err := supplier.GetBytes(INTEGER_BYTES_32)
+			if err != nil {
+				t.Error(err.Error())
+				t.FailNow()
+			}
+
+			// convert bytes to number
+			var value int32 = 0
+
+			for j := 0; j < INTEGER_BYTES_32; j++ {
+				value = int32(byte(value<<BYTE_SIZE) | (bytes[j] & 0xff))
+			}
+
+			if lastValue == value {
+				t.FailNow()
+			}
+			lastValue = value
+
+			// this will result in change of seed
+			time.Sleep(time.Duration(5) * time.Nanosecond)
 		}
 	})
 }
