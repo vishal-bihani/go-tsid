@@ -125,3 +125,42 @@ func Test_WithNodeBits(t *testing.T) {
 		}
 	})
 }
+
+func Test_WithRandom(t *testing.T) {
+
+	t.Run("given random should not return error", func(t *testing.T) {
+
+		supplier := NewMathRandomSupplier()
+		random := NewIntRandom(supplier)
+
+		tsidFactory, err := TsidFactoryBuilder().
+			WithRandom(random).
+			NewInstance()
+		if err != nil {
+			t.Error(err.Error())
+			t.FailNow()
+		}
+
+		_, err = tsidFactory.Generate()
+		if err != nil {
+			t.Error(err.Error())
+			t.FailNow()
+		}
+	})
+
+	t.Run("should use default random when not provided", func(t *testing.T) {
+
+		tsidFactory, err := TsidFactoryBuilder().
+			NewInstance()
+		if err != nil {
+			t.Error(err.Error())
+			t.FailNow()
+		}
+
+		_, err = tsidFactory.Generate()
+		if err != nil {
+			t.Error(err.Error())
+			t.FailNow()
+		}
+	})
+}
