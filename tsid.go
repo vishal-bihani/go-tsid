@@ -167,7 +167,7 @@ func IsValidRuneArray(arr []rune) bool {
 	return true
 }
 
-func (t *tsid) ToLong() int64 {
+func (t *tsid) ToInt64() int64 {
 	return t.number
 }
 
