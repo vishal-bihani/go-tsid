@@ -36,11 +36,16 @@ tsidFactory, err := TsidFactoryBuilder().
     WithCustomEpoch(customEpoch).
     WithClock(clock).
     WithRandom(random)
-    Builder()
+    Build()
 ```
 
 > Default node Id is 0 & node bits is 0. Epoch and clock are optional, and Random when not provided it internally uses
 > random from math/rand to generate random values
+
+> [!NOTE]
+> `.Build()` creates / returns the existing instance of the tsid factory, this is useful where single
+> instance of tsid factory needs to be shared across go routines. But if you need a new instance
+> use `.NewInstance()`
 
 Generate TSID
 
