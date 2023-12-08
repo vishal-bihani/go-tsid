@@ -16,10 +16,15 @@ limitations under the License.
 
 package tsid
 
+import (
+	"sync/atomic"
+	"time"
+)
+
 const (
 	TSID_EPOCH     int64 = 1672531200000 // 2023-01-01T00:00:00.000Z
 	TSID_BYTES     int32 = 8
-	TSID_CHARS     int32 = 13
+	TSID_CHARS     int32 = 13 // ToString returns a string of length 13
 	RANDOM_BITS    int32 = 22
 	RANDOM_MASK    int32 = 0x003fffff
 	NODE_BITS_1024 int32 = 10
@@ -28,6 +33,8 @@ const (
 var ALPHABET_UPPERCASE []rune = []rune("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
 var ALPHABET_LOWERCASE []rune = []rune("0123456789abcdefghjkmnpqrstvwxyz")
 var ALPHABET_VALUES []int64
+
+var atomicCounter atomic.Uint32
 
 func init() {
 	ALPHABET_VALUES = make([]int64, 128)
@@ -106,16 +113,31 @@ type tsid struct {
 	number int64
 }
 
+// NewTsid returns pointer to new tsid
 func NewTsid(number int64) *tsid {
 	return &tsid{
 		number: number,
 	}
 }
 
+// Fast returns a pointer to new random tsid
+func Fast() *tsid {
+	// Incrementing before using it
+	atomicCounter.Add(1)
+
+	time := (time.Now().UnixMilli() - TSID_EPOCH) << RANDOM_BITS
+	tail := atomicCounter.Load() & uint32(RANDOM_MASK)
+
+	return NewTsid(time | int64(tail))
+}
+
+// FromNumber returns pointer to tsid using the given number
 func FromNumber(number int64) *tsid {
 	return NewTsid(number)
 }
 
+// FromBytes returns pointer to tsid by converting the given bytes to
+// number
 func FromBytes(bytes []byte) *tsid {
 
 	// TODO: Add validation
@@ -134,6 +156,8 @@ func FromBytes(bytes []byte) *tsid {
 	return NewTsid(int64(number))
 }
 
+// FromString returns pointer to tsid by converting the given string to
+// number. It validates the string before conversion.
 func FromString(str string) *tsid {
 	arr := ToRuneArray(str)
 
@@ -156,6 +180,8 @@ func FromString(str string) *tsid {
 	return NewTsid(int64(number))
 }
 
+// ToRuneArray converts the given string to rune array. It also performs
+// validations on the rune array
 func ToRuneArray(str string) []rune {
 	arr := []rune(str)
 
@@ -165,6 +191,7 @@ func ToRuneArray(str string) []rune {
 	return arr
 }
 
+// IsValidRuneArray validates the rune array.
 func IsValidRuneArray(arr []rune) bool {
 
 	if arr == nil || len(arr) != int(TSID_CHARS) {
@@ -183,10 +210,12 @@ func IsValidRuneArray(arr []rune) bool {
 	return true
 }
 
-func (t *tsid) ToInt64() int64 {
+// ToNumber returns the numerical component of the tsid
+func (t *tsid) ToNumber() int64 {
 	return t.number
 }
 
+// ToBytes converts the number to bytes and returns the byte array
 func (t *tsid) ToBytes() []byte {
 	bytes := make([]byte, TSID_BYTES)
 
@@ -202,10 +231,12 @@ func (t *tsid) ToBytes() []byte {
 	return bytes
 }
 
+// ToString converts the number to crockford's base32 string and returns it
 func (t *tsid) ToString() string {
 	return t.ToStringWithAlphabets(ALPHABET_UPPERCASE)
 }
 
+// ToStringWithAlphabets converts the number to string using the given alphabets and returns it
 func (t *tsid) ToStringWithAlphabets(alphabets []rune) string {
 	chars := make([]rune, TSID_CHARS)
 
