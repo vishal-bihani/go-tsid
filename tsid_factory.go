@@ -175,6 +175,7 @@ type tsidFactoryBuilder struct {
 	random      Random
 }
 
+// TsidFactoryBuilder should be used to get instance of tsidFactory
 func TsidFactoryBuilder() *tsidFactoryBuilder {
 	return &tsidFactoryBuilder{}
 }
