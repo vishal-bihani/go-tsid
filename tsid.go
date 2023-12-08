@@ -231,9 +231,18 @@ func (t *tsid) ToBytes() []byte {
 	return bytes
 }
 
-// ToString converts the number to crockford's base32 string and returns it
+// ToString converts the number to a canonical string.
+// The output is 13 characters long and only contains characters from
+// Crockford's base32 alphabets
 func (t *tsid) ToString() string {
 	return t.ToStringWithAlphabets(ALPHABET_UPPERCASE)
+}
+
+// ToLowerCase converts the number to a canonical string in lower case.
+// The output is 13 characters long and only contains characters from
+// Crockford's base32 alphabets
+func (t *tsid) ToLowerCase() string {
+	return t.ToStringWithAlphabets(ALPHABET_LOWERCASE)
 }
 
 // ToStringWithAlphabets converts the number to string using the given alphabets and returns it
