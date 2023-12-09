@@ -16,13 +16,8 @@ In summary:
 
 Recommended readings:
 
-- [Javadocs](https://javadoc.io/doc/com.github.f4b6a3/tsid-creator)
-- [FAQ wiki page](https://github.com/f4b6a3/tsid-creator/wiki)
-- [How to not use TSID factories](https://fillumina.wordpress.com/2023/01/19/how-to-not-use-tsid-factories/)
-- [Time Sorted IDs: Oracle implementation](https://connor-mcdonald.com/2023/07/11/time-sorted-ids/)
 - [The best UUID type for a database Primary Key](https://vladmihalcea.com/uuid-database-primary-key/)
 - [The primary key dilemma: ID vs UUID and some practical solutions](https://fillumina.wordpress.com/2023/02/06/the-primary-key-dilemma-id-vs-uuid-and-some-practical-solutions/)
-- [The best way to generate a TSID entity identifier with JPA and Hibernate](https://vladmihalcea.com/tsid-identifier-jpa-hibernate/)
 - [Primary keys in the DB - what to use? ID vs UUID or is there something else?](https://www.linkedin.com/pulse/primary-keys-db-what-use-id-vs-uuid-something-else-lucas-persson)
 
 ## Usage
