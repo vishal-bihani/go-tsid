@@ -123,10 +123,10 @@ func NewTsid(number int64) *tsid {
 // Fast returns a pointer to new random tsid
 func Fast() *tsid {
 	// Incrementing before using it
-	atomicCounter.Add(1)
+	cnt := atomicCounter.Add(1)
 
 	time := (time.Now().UnixMilli() - TSID_EPOCH) << RANDOM_BITS
-	tail := atomicCounter.Load() & uint32(RANDOM_MASK)
+	tail := cnt & uint32(RANDOM_MASK)
 
 	return NewTsid(time | int64(tail))
 }
