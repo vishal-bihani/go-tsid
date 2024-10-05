@@ -109,17 +109,21 @@ func (factory *tsidFactory) Generate() (*tsid, error) {
 func (factory *tsidFactory) getTime() (int64, error) {
 	time := factory.clock.UnixMilli()
 	if time <= factory.lastTime {
+		lock.Lock()
 		factory.counter++
 		carry := uint32(factory.counter) >> factory.counterBits
 		factory.counter = factory.counter & factory.counterMask
 		time = factory.lastTime + int64(carry)
+		lock.Unlock()
 
 	} else {
 		value, err := factory.getRandomValue()
 		if err != nil {
 			return 0, err
 		}
+		lock.Lock()
 		factory.counter = value
+		lock.Unlock()
 	}
 	factory.lastTime = time
 	return (time - factory.customEpoch), nil
