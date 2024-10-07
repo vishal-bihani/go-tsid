@@ -31,11 +31,11 @@ var lock = &sync.Mutex{}
 var rLock = &sync.Mutex{}
 
 // Only a single instance of tsidFactory will be used per node
-var tsidFactoryInstance *tsidFactory
+var tsidFactoryInstance *TsidFactory
 
 // tsidFactory is a singleton which
 // should be used to generate random tsid
-type tsidFactory struct {
+type TsidFactory struct {
 	node        int32
 	nodeBits    int32
 	nodeMask    int32
@@ -49,10 +49,10 @@ type tsidFactory struct {
 	randomBytes int32
 }
 
-func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
+func newTsidFactory(builder *tsidFactoryBuilder) (*TsidFactory, error) {
 
 	// properties from builder
-	tsidFactory := &tsidFactory{
+	tsidFactory := &TsidFactory{
 		customEpoch: builder.GetCustomEpoch(),
 		clock:       builder.GetClock(),
 		random:      builder.GetRandom(),
@@ -92,7 +92,7 @@ func newTsidFactory(builder *tsidFactoryBuilder) (*tsidFactory, error) {
 }
 
 // Generate will return a tsid with random number
-func (factory *tsidFactory) Generate() (*tsid, error) {
+func (factory *TsidFactory) Generate() (*Tsid, error) {
 	time, err := factory.getTime()
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (factory *tsidFactory) Generate() (*tsid, error) {
 	return NewTsid(tsidNumber), nil
 }
 
-func (factory *tsidFactory) getTime() (int64, error) {
+func (factory *TsidFactory) getTime() (int64, error) {
 	time := factory.clock.UnixMilli()
 	if time <= factory.lastTime {
 		lock.Lock()
@@ -129,11 +129,11 @@ func (factory *tsidFactory) getTime() (int64, error) {
 	return (time - factory.customEpoch), nil
 }
 
-func (factory *tsidFactory) getRandomValue() (int32, error) {
+func (factory *TsidFactory) getRandomValue() (int32, error) {
 	return factory.getRandomCounter()
 }
 
-func (factory *tsidFactory) getRandomCounter() (int32, error) {
+func (factory *TsidFactory) getRandomCounter() (int32, error) {
 	switch factory.random.(type) {
 	case *byteRandom:
 		{
@@ -258,7 +258,7 @@ func (builder *tsidFactoryBuilder) GetCustomEpoch() int64 {
 	return builder.customEpoch
 }
 
-func (builder *tsidFactoryBuilder) Build() (*tsidFactory, error) {
+func (builder *tsidFactoryBuilder) Build() (*TsidFactory, error) {
 	if tsidFactoryInstance != nil {
 		return tsidFactoryInstance, nil
 	}
@@ -276,6 +276,6 @@ func (builder *tsidFactoryBuilder) Build() (*tsidFactory, error) {
 	return tsidFactoryInstance, nil
 }
 
-func (builder *tsidFactoryBuilder) NewInstance() (*tsidFactory, error) {
+func (builder *tsidFactoryBuilder) NewInstance() (*TsidFactory, error) {
 	return newTsidFactory(builder)
 }
