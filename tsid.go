@@ -109,19 +109,19 @@ func init() {
 	ALPHABET_VALUES['O'] = 0x00
 }
 
-type tsid struct {
+type Tsid struct {
 	number int64
 }
 
 // NewTsid returns pointer to new tsid
-func NewTsid(number int64) *tsid {
-	return &tsid{
+func NewTsid(number int64) *Tsid {
+	return &Tsid{
 		number: number,
 	}
 }
 
 // Fast returns a pointer to new random tsid
-func Fast() *tsid {
+func Fast() *Tsid {
 	// Incrementing before using it
 	cnt := atomicCounter.Add(1)
 
@@ -132,13 +132,13 @@ func Fast() *tsid {
 }
 
 // FromNumber returns pointer to tsid using the given number
-func FromNumber(number int64) *tsid {
+func FromNumber(number int64) *Tsid {
 	return NewTsid(number)
 }
 
 // FromBytes returns pointer to tsid by converting the given bytes to
 // number
-func FromBytes(bytes []byte) *tsid {
+func FromBytes(bytes []byte) *Tsid {
 
 	// TODO: Add validation
 
@@ -158,7 +158,7 @@ func FromBytes(bytes []byte) *tsid {
 
 // FromString returns pointer to tsid by converting the given string to
 // number. It validates the string before conversion.
-func FromString(str string) *tsid {
+func FromString(str string) *Tsid {
 	arr := ToRuneArray(str)
 
 	var number int64 = 0
@@ -211,12 +211,12 @@ func IsValidRuneArray(arr []rune) bool {
 }
 
 // ToNumber returns the numerical component of the tsid
-func (t *tsid) ToNumber() int64 {
+func (t *Tsid) ToNumber() int64 {
 	return t.number
 }
 
 // ToBytes converts the number to bytes and returns the byte array
-func (t *tsid) ToBytes() []byte {
+func (t *Tsid) ToBytes() []byte {
 	bytes := make([]byte, TSID_BYTES)
 
 	bytes[0] = byte(uint64(t.number) >> 56)
@@ -234,19 +234,19 @@ func (t *tsid) ToBytes() []byte {
 // ToString converts the number to a canonical string.
 // The output is 13 characters long and only contains characters from
 // Crockford's base32 alphabets
-func (t *tsid) ToString() string {
+func (t *Tsid) ToString() string {
 	return t.ToStringWithAlphabets(ALPHABET_UPPERCASE)
 }
 
 // ToLowerCase converts the number to a canonical string in lower case.
 // The output is 13 characters long and only contains characters from
 // Crockford's base32 alphabets
-func (t *tsid) ToLowerCase() string {
+func (t *Tsid) ToLowerCase() string {
 	return t.ToStringWithAlphabets(ALPHABET_LOWERCASE)
 }
 
 // ToStringWithAlphabets converts the number to string using the given alphabets and returns it
-func (t *tsid) ToStringWithAlphabets(alphabets []rune) string {
+func (t *Tsid) ToStringWithAlphabets(alphabets []rune) string {
 	chars := make([]rune, TSID_CHARS)
 
 	chars[0] = alphabets[((uint64(t.number) >> 60) & 0b11111)]
@@ -267,26 +267,26 @@ func (t *tsid) ToStringWithAlphabets(alphabets []rune) string {
 }
 
 // IsValid checks if the given tsid string is valid or not
-func (t *tsid) IsValid(str string) bool {
+func (t *Tsid) IsValid(str string) bool {
 	return len(str) != 0 && IsValidRuneArray([]rune(str))
 }
 
 // GetRandom returns random component (node + counter) of the tsid
-func (t *tsid) GetRandom() int64 {
+func (t *Tsid) GetRandom() int64 {
 	return t.number & int64(RANDOM_MASK)
 }
 
 // GetUnixMillis returns time of creation in millis since 1970-01-01
-func (t *tsid) GetUnixMillis() int64 {
+func (t *Tsid) GetUnixMillis() int64 {
 	return t.getTime() + TSID_EPOCH
 }
 
 // GetUnixMillis returns time of creation in millis since 1970-01-01
-func (t *tsid) GetUnixMillisWithCustomEpoch(epoch int64) int64 {
+func (t *Tsid) GetUnixMillisWithCustomEpoch(epoch int64) int64 {
 	return t.getTime() + epoch
 }
 
 // getTime returns the time component
-func (t *tsid) getTime() int64 {
+func (t *Tsid) getTime() int64 {
 	return int64(uint64(t.number) >> int64(RANDOM_BITS))
 }
