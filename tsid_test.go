@@ -106,3 +106,25 @@ func Test_GetUnixMillis(t *testing.T) {
 		}
 	})
 }
+
+func Test_FromString(t *testing.T) {
+
+	t.Run("should round-trip a generated tsid", func(t *testing.T) {
+		tsidFactory, _ := TsidFactoryBuilder().
+			NewInstance()
+		assert.NotNil(t, tsidFactory)
+
+		tsid, _ := tsidFactory.Generate()
+		assert.NotNil(t, tsid)
+
+		parsed := FromString(tsid.ToString())
+		assert.NotNil(t, parsed)
+		assert.Equal(t, tsid.ToNumber(), parsed.ToNumber())
+	})
+
+	t.Run("should return nil for invalid input instead of panicking", func(t *testing.T) {
+		assert.Nil(t, FromString("zzzzzzzzzzzzz"))
+		assert.Nil(t, FromString(""))
+		assert.Nil(t, FromString("too-short"))
+	})
+}

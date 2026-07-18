@@ -157,9 +157,13 @@ func FromBytes(bytes []byte) *Tsid {
 }
 
 // FromString returns pointer to tsid by converting the given string to
-// number. It validates the string before conversion.
+// number. It validates the string before conversion and returns nil when
+// the string is not a valid tsid.
 func FromString(str string) *Tsid {
 	arr := ToRuneArray(str)
+	if arr == nil {
+		return nil
+	}
 
 	var number int64 = 0
 
